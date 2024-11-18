@@ -71,11 +71,11 @@ class EchoBot(ActivityHandler):
             str: The generated case study, or an empty string if an error occurs.
         """
         try:
-            model = ChatOpenAI(model_name='gpt-4o', temperature = 0.5, api_key=OPENAI_KEY)
+            model = ChatOpenAI(model_name='chatgpt-4o-latest', temperature = 0.5, api_key=OPENAI_KEY)
             dairy_example_input = self.read_md_to_formattable_string(os.path.join('data', 'example_input.md'))
             dairy_example_output = self.read_md_to_formattable_string(os.path.join('data', 'example_output.md'))
 
-            dairy_prompt = self.read_md_to_formattable_string(os.path.join('data', 'data\dairy_summary_prompt copy.md'))
+            dairy_prompt = self.read_md_to_formattable_string(os.path.join('data', 'dairy_summary_prompt copy.md'))
             prompt_template = ChatPromptTemplate.from_messages([("system", dairy_prompt), "user", dairy_txt])
             parser = StrOutputParser()
             chain = prompt_template | model | parser
