@@ -1,66 +1,62 @@
-Mache eine Tagebuchauswertung für mich.
+Please create a detailed analysis of my diary entry according to the following format to effectively extract important insights and "Next Steps". Note that the answer must be in the same language as the input.
 
-Hier ist das Format, das du für deine Tagebuchauswertung nutzen musst, um wichtige Erkenntnisse und "Next Steps" effektiv herauszufiltern:
+# Steps
+
+1. Use the given format and structure for the diary analysis.
+2. Follow the specified formatting instructions and Markdown limitations.
+3. Organize the content in sections using the format `### [Heading]`.
+4. Insert `---` to separate different main sections.
+5. Present the analysis in an easily readable narrative form to ensure clarity while fully retaining the intent and content.
+
+# Format
+
 """
-1. Rückblick und Erkenntnisse
-Was ist passiert?
-Beschreibe die wichtigsten Ereignisse oder Themen deines Tages.
-Was habe ich gelernt?
-Notiere die wesentlichen Erkenntnisse oder Aha-Momente. Was hat gut funktioniert, und was hat nicht so geklappt?
-Emotionale Reaktion
-Wie hast du dich gefühlt? Welche Emotionen waren besonders präsent, und was könnten diese dir über dich und deine Situation sagen?
-Ursachen und Zusammenhänge
-Was hat möglicherweise zu bestimmten Ergebnissen oder Gefühlen geführt? Gibt es Muster, die du erkennst?
+1. Review and Insights
+- What happened?
+  Describe the most important events or themes of your day.
+- What did I learn?
+  Note the key insights or aha moments. What worked well, and what didn't?
+- Emotional Reaction
+  How did you feel? Which emotions were present, and what do they say about you and your situation?
+- Causes and Connections
+  What led to certain results or feelings? Are there recognizable patterns?
+
 2. Next Steps
-Was kann ich besser machen?
-Überlege, welche konkreten Schritte oder Veränderungen dir helfen könnten, besser mit ähnlichen Situationen umzugehen oder dein gewünschtes Ergebnis zu erreichen.
-Welche Ressourcen brauche ich?
-Gibt es bestimmte Fähigkeiten, Wissen oder Unterstützung, die dir auf deinem Weg weiterhelfen?
-Ein kleiner Schritt
-Identifiziere einen ganz kleinen, machbaren Schritt, den du in den nächsten Tagen unternehmen kannst, um deine Ziele zu verfolgen.
-Langfristige Ziele verfeinern
-Falls ein Thema häufiger auftaucht, könntest du überlegen, ob es zu einem neuen, längerfristigen Ziel werden sollte.
-3. Todos für heute
-Eine Liste an Todos, über die ich gesprochen habe und die mich an heutigen Tag erwarten. Gerne sortiert nach Projekten, oder Themen.
+- What can I do better?
+  Consider what concrete steps or changes could help you.
+- What resources do I need?
+  Are there skills, knowledge, or support that could help you further?
+- A small step
+  Identify a feasible step you can take in the next few days to pursue your goals.
+- Refine long-term goals
+  If a topic comes up frequently, it could become a new long-term goal.
+
+3. Todos for today
+A list of todos awaiting you today, sorted by projects or themes.
 """
 
-Formatierung:
-"""
-### Überschrift
-Abschnitte
---- Trennlinie
-"""
-Verwende die folgende Markdown-Struktur für deine Tagebucheinträge:
-"""
-- Verwende ### für Überschriften.
-- Verwende --- für thematische Trennlinien zwischen Abschnitten.
-- Verwende - oder * für Aufzählungspunkte.
-"""
+# Formatting Instructions
 
-Struktur:
+- Use `###` for headings.
+- Use `---` for thematic separators between sections.
+- Use `-` or `*` for bullet points.
+- Do not use **bold**, *italic*, or __underline__.
+
+# Structure
+
 """
-### Erkenntnisse:
-[Hauptthema 1: Beschreibung und Auswirkungen]
-- Beispiel: Klarheit und Fokussierung durch Medikamente
-Die ADHS-Medikamente fördern deine Konzentration und Freude an Alltagsaktivitäten, was dein Wohlbefinden und deine Produktivität steigert.
+### Insights:
+### [Identified  Insight]
+[Insight Description]
 ---
 ### Next Steps:
-[Aktion 1: Beschreibung und Umsetzung]
-- Beispiel: Portfolioaufbau und Publikation
-Wähle abgeschlossene KI-Projekte aus und bereite diese strukturiert für dein Portfolio vor, um deine Stärken hervorzuheben.
-### Todos:
-[Todo 1: Beschreibung und Umsetzung]
-- Beispiel: Erledigen der beschriebenen Aufgaben für das Kundenprojekt
-"""
-
-Example Conversation for Context:
-"""
-User: {dairy_next_steps_input} 
-AI: {dairy_next_steps_output}
-"""
-
-
-Hier ist die Auswertung deines Tagebuchs nach dem vorgegebenen Format:
-
+### [Identified Next Step]
+[Description]
 ---
+### Todos:
+### [identified Todo]
+[Todo Description]
+---
+"""
 
+Please present the analysis of my diary according to these guidelines.

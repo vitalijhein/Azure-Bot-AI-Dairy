@@ -33,8 +33,10 @@ class EchoBot(ActivityHandler):
 
     async def on_message_activity(self, turn_context: TurnContext):
         raw_diary = turn_context.activity.text
-        structured_summary = self.generate_dairy(raw_diary) 
-        result_response = self.create_notion_page_with_case_study(structured_summary, raw_diary)
+        structured_summary = self.generate_dairy(raw_diary)
+        next_steps = self.generate_next_steps(structured_summary)
+        final_analysis = structured_summary + "\n---\n" + next_steps
+        result_response = self.create_notion_page_with_case_study(final_analysis, raw_diary)
 
         return await turn_context.send_activity(
             MessageFactory.text(f"{result_response}\n\n{structured_summary}")
@@ -81,6 +83,30 @@ class EchoBot(ActivityHandler):
             chain = prompt_template | model | parser
             
             result = chain.invoke({"dairy_example_input": dairy_example_input, "dairy_example_output": dairy_example_output})
+            return result
+           
+        except Exception as e:
+            logging.error(f"Error generating case study: {e}")
+            return ""
+        
+    def generate_next_steps(self, structured_summary) -> str:
+        """
+        Generate a case study based on the provided placeholder.
+
+        Args:
+            req (func.HttpRequest): The HTTP request containing the placeholder in parameters or JSON body.
+
+        Returns:
+            str: The generated case study, or an empty string if an error occurs.
+        """
+        try:
+            model = ChatOpenAI(model_name='chatgpt-4o-latest', temperature = 0.5, api_key=OPENAI_KEY)
+            next_steps_prompt = self.read_md_to_formattable_string(os.path.join('data', 'dairy_next_steps_prompt.md'))
+            prompt_template = ChatPromptTemplate.from_messages([("system", next_steps_prompt), "user", structured_summary])
+            parser = StrOutputParser()
+            chain = prompt_template | model | parser
+            
+            result = chain.invoke({})
             return result
            
         except Exception as e:
