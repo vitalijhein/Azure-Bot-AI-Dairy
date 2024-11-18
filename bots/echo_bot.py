@@ -33,7 +33,7 @@ class EchoBot(ActivityHandler):
 
     async def on_message_activity(self, turn_context: TurnContext):
         raw_diary = turn_context.activity.text
-        structured_summary = self.generate_case_study(raw_diary) 
+        structured_summary = self.generate_dairy(raw_diary) 
         result_response = self.create_notion_page_with_case_study(structured_summary, raw_diary)
 
         return await turn_context.send_activity(
@@ -60,7 +60,7 @@ class EchoBot(ActivityHandler):
             logging.error(f"Error while reading markdown file {file_path}: {e}")
             return "" 
         
-    def generate_case_study(self, dairy_txt) -> str:
+    def generate_dairy(self, dairy_txt) -> str:
         """
         Generate a case study based on the provided placeholder.
 
@@ -75,7 +75,7 @@ class EchoBot(ActivityHandler):
             dairy_example_input = self.read_md_to_formattable_string(os.path.join('data', 'example_input.md'))
             dairy_example_output = self.read_md_to_formattable_string(os.path.join('data', 'example_output.md'))
 
-            dairy_prompt = self.read_md_to_formattable_string(os.path.join('data', 'dairy_summary_prompt.md'))
+            dairy_prompt = self.read_md_to_formattable_string(os.path.join('data', 'data\dairy_summary_prompt copy.md'))
             prompt_template = ChatPromptTemplate.from_messages([("system", dairy_prompt), "user", dairy_txt])
             parser = StrOutputParser()
             chain = prompt_template | model | parser
