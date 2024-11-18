@@ -39,7 +39,7 @@ class EchoBot(ActivityHandler):
         result_response = self.create_notion_page_with_case_study(final_analysis, raw_diary)
 
         return await turn_context.send_activity(
-            MessageFactory.text(f"{result_response}\n\n{structured_summary}")
+            MessageFactory.text(f"{result_response}\n\n{result_response}")
         )
         
         
