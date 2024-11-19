@@ -73,16 +73,20 @@ class EchoBot(ActivityHandler):
             str: The generated case study, or an empty string if an error occurs.
         """
         try:
-            model = ChatOpenAI(model_name='chatgpt-4o-latest', temperature = 0.5, api_key=OPENAI_KEY)
+            model = ChatOpenAI(model_name='chatgpt-4o-latest', temperature = 1, api_key=OPENAI_KEY)
             dairy_example_input = self.read_md_to_formattable_string(os.path.join('data', 'example_input.md'))
             dairy_example_output = self.read_md_to_formattable_string(os.path.join('data', 'example_output.md'))
 
-            dairy_prompt = self.read_md_to_formattable_string(os.path.join('data', 'dairy_summary_prompt copy.md'))
-            prompt_template = ChatPromptTemplate.from_messages([("system", dairy_prompt), "user", dairy_txt])
+            dairy_prompt = self.read_md_to_formattable_string(os.path.join('data', 'dairy_summary_prompt copy 2.md'))
+            #prompt_template = ChatPromptTemplate.from_messages([("system", dairy_prompt), "user", dairy_txt])
+            prompt_template = ChatPromptTemplate.from_messages([("system", dairy_prompt)])
+
             parser = StrOutputParser()
             chain = prompt_template | model | parser
             
-            result = chain.invoke({"dairy_example_input": dairy_example_input, "dairy_example_output": dairy_example_output})
+            #result = chain.invoke({"dairy_example_input": dairy_example_input, "dairy_example_output": dairy_example_output})
+            result = chain.invoke({"raw_dairy": dairy_txt})
+
             return result
            
         except Exception as e:
