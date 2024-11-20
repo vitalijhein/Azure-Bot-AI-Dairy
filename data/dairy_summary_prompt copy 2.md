@@ -36,10 +36,10 @@ For a raw input spanning two days, your output should look like this:
 """
 
 ### Instructions:
-1. Identify the days mentioned in the raw input and use them as section headers.
-2. Retain all original headings mentioned in the input under the appropriate day.
-3. Insert `---` dividers between sections to improve readability.
-4. Ensure all information is included in the structured output without altering the meaning or tone.
+1. Separate each day's entry with a `### [Day, Date]` header based on dates or day references in the input. 
+2. Analyze the content to infer logical themes (e.g., "Rückblick auf den Tag," "Sport und Mobilität") and organize the information under these headings. 
+3. Use thematic dividers `---` between sections for readability. 
+4. Retain all original details, ensuring the final output matches the tone and style of the input.
 
 Now, structure the following diary entry:
 """
