@@ -16,4 +16,6 @@ class DefaultConfig:
     APP_TYPE = os.environ.get("MicrosoftAppType", "MultiTenant")
     APP_TENANTID = os.environ.get("MicrosoftAppTenantId", "")
     OPENAI_KEY = os.environ.get("OpenAIKey", "")
+    PROJECTS_DATABASE_ID = os.getenv("ProjectsDatabaseId", "")
+    TASKS_DATABASE_ID = os.getenv("TasksDatabaseId", "")
     
