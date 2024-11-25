@@ -23,9 +23,13 @@ from langchain.output_parsers import OutputFixingParser
 
 
 
-# Set up logging configuration
-logging.basicConfig(level=logging.INFO)
+# Initialize logger
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)  # Set the log level as needed
+handler = logging.StreamHandler()  # Add a handler, e.g., console
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 NOTION_API_KEY = os.environ.get("NotionAPIKey", "")  # Set your Notion API key in the environment
 DATABASE_ID = os.environ.get("NotionDatabaseId", "")  # Set your Notion database ID in the environment
@@ -38,14 +42,15 @@ from datetime import date
 
 class Task(BaseModel):
     project_name: str = Field(description="Name of the project.")
-    task_name: List[str] = Field(..., description="Name of the task.")
-    status: Optional[str] = Field(default="Not Started")#, description="Current status of the task.")
+    task_name: str = Field(..., description="Name of the task.")
+    status: str = Field(default="Not Started")#, description="Current status of the task.")
     due_date: Optional[date] = Field(..., description="Due date for the task in ISO 8601 format (YYYY-MM-DD).")
-    
+    new_task: bool = Field(description="Indicates if this is a new task.")
+
 class ProjectOutput(BaseModel):
     project_id: Optional[str] = Field(description="Id of the project of existing project.") 
     project_name: str = Field(description="Name of the project.")
-    summary: Optional[str] = Field(default=None, description="Brief description or summary of the project.")
+    summary: str = Field(description="Brief description or summary of the project.")
     new_project: bool = Field(description="Indicates if this is a new project.")
 
 class EchoBot(ActivityHandler):
@@ -69,6 +74,7 @@ class EchoBot(ActivityHandler):
             self.generate_projects_and_tasks_in_notion(raw_diary)
             await turn_context.send_activity(
                 MessageFactory.text(f"{result_response}\n\n{final_analysis}")
+                #MessageFactory.text("done")
             )
         except Exception as e:
             logger.error(f"Error in on_message_activity: {e}")
@@ -143,10 +149,53 @@ class EchoBot(ActivityHandler):
            
         except Exception as e:
             logging.error(f"Error generating case study: {e}")
-            return ""     
+            return "" 
+            
+    def get_tasks_by_project(self, project_id: str) -> List[str]:
+        """
+        Retrieves all task names associated with a specific project by its ID.
+
+        Args:
+            project_id (str): The ID of the project to retrieve tasks for.
+
+        Returns:
+            List[str]: A list of task names associated with the project.
+        """
+        url = f"https://api.notion.com/v1/databases/{TASKS_DATABASE_ID}/query"
+        headers = {
+            "Authorization": f"Bearer {NOTION_API_KEY}",
+            "Content-Type": "application/json",
+            "Notion-Version": "2022-06-28",
+        }
         
+        try:
+            # Query the database for tasks
+            response = requests.post(url, headers=headers, json={
+                "filter": {
+                    "property": "Project",
+                    "relation": {
+                        "contains": project_id
+                    }
+                }
+            })
+            response.raise_for_status()
+            
+            # Parse the response
+            tasks = response.json().get("results", [])
+            task_names = []
+            for task in tasks:
+                task_name = task.get("properties", {}).get("Task name", {}).get("title", [])
+                if task_name:
+                    task_names.append(task_name[0].get("plain_text", ""))
+            
+            return task_names
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error retrieving tasks for project {project_id}: {e}")
+            return []
+    
         
-    def identify_tasks_for_project(self, projects_name, dairy_txt) -> str:
+    def identify_tasks_for_project(self, projects_name, existing_tasks, dairy_txt) -> str:
         """
         """
         try:
@@ -156,6 +205,52 @@ class EchoBot(ActivityHandler):
             model = ChatOpenAI(model_name='chatgpt-4o-latest', temperature = 0, api_key=OPENAI_KEY)
 
             identify_prompt = self.read_md_to_formattable_string(os.path.join('data', 'identify_tasks_for_project.md'))
+            #prompt_template = ChatPromptTemplate.from_messages([("system", dairy_prompt), "user", dairy_txt])
+            prompt_template = ChatPromptTemplate.from_messages([("system", identify_prompt)])
+
+            parser = JsonOutputParser(pydantic_object=Task)
+            chain = prompt_template | model | parser
+            
+            #result = chain.invoke({"dairy_example_input": dairy_example_input, "dairy_example_output": dairy_example_output})
+            result = chain.invoke({"projects_name": projects_name,  "json_format": parser.get_format_instructions(), "input": dairy_txt, "existing_tasks": existing_tasks})
+
+            try: 
+                result = json.dumps(result)
+            except Exception as json_err:
+                logging.error(f"Error converting result to JSON: {json_err}")
+                err_fix_parser = OutputFixingParser.from_llm(parser=parser, llm=model)
+                result = err_fix_parser.parse(result)
+            
+            try:
+                data = json.loads(result)
+                #output_data = {key: "\n".join(value) if isinstance(value, list) else value for key, value in data.items()}
+                #output_json = json.dumps(output_data, indent=4)
+                return data#, output_json
+            except json.JSONDecodeError as decode_err:
+                logging.error(f"Error decoding JSON: {decode_err}")
+                return ""
+            except TypeError as type_err:
+                logging.error(f"Type error processing JSON data: {type_err}")
+                return ""
+            except Exception as e:
+                logging.error(f"Unexpected error processing JSON data: {e}")
+                return ""
+            
+           
+        except Exception as e:
+            logging.error(f"Error generating case study: {e}")
+            return ""         
+    
+    def identify_initial_tasks_for_projects(self, projects_name, dairy_txt) -> str:
+        """
+        """
+        try:
+            if not OPENAI_KEY:
+                logger.error("OpenAI API key is not set in environment variables.")
+                raise ValueError("OpenAI API key is not set.")
+            model = ChatOpenAI(model_name='chatgpt-4o-latest', temperature = 0, api_key=OPENAI_KEY)
+
+            identify_prompt = self.read_md_to_formattable_string(os.path.join('data', 'initial_task_creation.md'))
             #prompt_template = ChatPromptTemplate.from_messages([("system", dairy_prompt), "user", dairy_txt])
             prompt_template = ChatPromptTemplate.from_messages([("system", identify_prompt)])
 
@@ -190,8 +285,7 @@ class EchoBot(ActivityHandler):
            
         except Exception as e:
             logging.error(f"Error generating case study: {e}")
-            return ""         
-        
+            return ""          
         
         
     def generate_dairy(self, dairy_txt) -> str:
@@ -243,7 +337,7 @@ class EchoBot(ActivityHandler):
                 logger.error("OpenAI API key is not set in environment variables.")
                 raise ValueError("OpenAI API key is not set.")
             model = ChatOpenAI(model_name='chatgpt-4o-latest', temperature = 0.5, api_key=OPENAI_KEY)
-            next_steps_prompt = self.read_md_to_formattable_string(os.path.join('data', '.md'))
+            next_steps_prompt = self.read_md_to_formattable_string(os.path.join('data', 'dairy_next_steps_prompt.md'))
             prompt_template = ChatPromptTemplate.from_messages([("system", next_steps_prompt), "user", structured_summary])
             parser = StrOutputParser()
             chain = prompt_template | model | parser
@@ -973,55 +1067,101 @@ class EchoBot(ActivityHandler):
             return f"Failed to add project '{project_name}': {e}"
 
     def generate_projects_and_tasks_in_notion(self, dairy_txt):
-        projects = self.query_all_projects()
-        project_names = []
-        for project in projects:
-            project_names.append(
+        try: 
+            # Step 1: Query all existing projects
+            logger.info("Querying all projects from Notion.")
+            projects = self.query_all_projects()
+            project_names = [
                 f"Project-Id: {project['project_id']}, Project-Name: {project['project_name']}\n"
+                for project in projects
+            ]
+    
+            # Step 2: Extract projects based on the diary text
+            logger.info("Extracting projects from diary text.")
+            results = self.extract_projects(project_names, dairy_txt)
+            if not results:
+                logger.warning("No projects were extracted from the diary text.")        
+            
+            # Step 3: Process each result
+            for result in results:
+                if result.get("new_project") == True:
+                    try: 
 
-            )
- 
-        results = self.extract_projects(project_names, dairy_txt)
-        
-        
-        for result in results:
-            if result.get("new_project") == True: 
-                project_id, status = self.add_project(
-                    project_name=result.get("project_name"),
-                    status="Backlog",
-                    owner=["ac7a3bd0-c111-4464-8f45-8a857a1abc8a"],  # Replace with actual user ID(s)
-                    priority="Low",
-                    summary=result.get("summary")
-                )  
-                task_results = self.identify_tasks_for_project(result.get("project_name"), dairy_txt)
-                tasks = []
-                for task in task_results.get("task_name"): 
-                    tasks.append(
-                        {
-                            "task_name": task,
-                            "status": "Not Started",
-                            "priority": "Low",
-                            "assignee": ["ac7a3bd0-c111-4464-8f45-8a857a1abc8a"]  # Replace with actual user IDs
-                        }
-                    )
-                result = self.add_tasks_to_project(project_id, tasks)
-                print(result)
-            elif result.get("new_project") == False:
-                project_id = result.get("project_id")
-                project_name=result.get("project_name")
-                task_results = self.identify_tasks_for_project(result.get("project_name"), dairy_txt)
-                tasks = []
-                for task in task_results.get("task_name"): 
-                    tasks.append(
-                        {
-                            "task_name": task,
-                            "status": "Not Started",
-                            "priority": "Low",
-                            "assignee": ["ac7a3bd0-c111-4464-8f45-8a857a1abc8a"]  # Replace with actual user IDs
-                        }
-                    )
-                result = self.add_tasks_to_project(project_id, tasks)
-                print(result)  
+                        project_name=result.get("project_name")
+                        logger.info(f"Adding new project: {project_name}.")
+
+                        project_id, status = self.add_project(
+                            project_name=project_name,
+                            status="Backlog",
+                            owner=["ac7a3bd0-c111-4464-8f45-8a857a1abc8a"],  # Replace with actual user ID(s)
+                            priority="Low",
+                            summary=result.get("summary")
+                        )
+
+                        task_results = self.identify_initial_tasks_for_projects(project_name, dairy_txt)
+                            
+                        tasks = []
+                        if isinstance(task_results, dict):
+                            task_results = [task_results]  # Convert to a single-item list
+                        elif not isinstance(task_results, list):
+                            logger.warning(f"Unexpected task_results type: {type(task_results)}. Defaulting to empty list.")
+                            task_results = task_results
+                        
+                        for task in task_results:
+                            if task.get("new_task"):
+                                task_name= task.get("task_name")
+                                tasks.append(
+                                    {
+                                        "task_name": task_name,
+                                        "status": "Not Started",
+                                        "priority": "Low",
+                                        "assignee": ["ac7a3bd0-c111-4464-8f45-8a857a1abc8a"]  # Replace with actual user IDs
+                                    }
+                                )
+                        if tasks:
+                            logger.info(f"Adding {len(tasks)} tasks to project ID {project_id}.")
+                            result = self.add_tasks_to_project(project_id, tasks)
+                            logger.debug(f"Add tasks result: {result}")
+                    except Exception as e:
+                        logger.error(f"Error while processing new project {result.get('project_name')}: {e}", exc_info=True)
+                     
+                elif result.get("new_project") == False:
+                    try:
+                        project_id = result.get("project_id")
+                        project_name=result.get("project_name")
+                        task_names_list = self.get_tasks_by_project(project_id) 
+                        task_names_string = "\n".join(task_names_list) + "\n"
+
+                        task_results = self.identify_tasks_for_project(project_name, task_names_string, dairy_txt)                
+                        
+                        tasks = []
+                                        # Ensure task_results is a list
+                        if isinstance(task_results, dict):
+                            task_results = [task_results]  # Convert to a single-item list
+                        elif not isinstance(task_results, list):
+                            logger.warning(f"Unexpected task_results type: {type(task_results)}. Defaulting to empty list.")
+                            task_results = task_results
+                        for task in task_results:
+                            if task.get("new_task"):
+                                task_name= task.get("task_name")
+                                tasks.append(
+                                    {
+                                        "task_name": task_name,
+                                        "status": "Not Started",
+                                        "priority": "Low",
+                                        "assignee": ["ac7a3bd0-c111-4464-8f45-8a857a1abc8a"]  # Replace with actual user IDs
+                                    }
+                                )
+                        if tasks:
+                            logger.info(f"Adding {len(tasks)} tasks to project ID {project_id}.")
+                            result = self.add_tasks_to_project(project_id, tasks)
+                            logger.debug(f"Add tasks result: {result}")
+                    except Exception as e:
+                        logger.error(f"Error while updating project {result.get('project_name')} (ID: {project_id}): {e}", exc_info=True)
+                else:
+                    logger.warning(f"Unexpected result format: {result}")
+        except Exception as e:
+            logger.critical(f"Critical failure in generate_projects_and_tasks_in_notion: {e}", exc_info=True)  
 
 
 # gunicorn --bind 0.0.0.0 --worker-class aiohttp.worker.GunicornWebWorker app:APP
