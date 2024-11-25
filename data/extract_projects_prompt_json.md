@@ -25,4 +25,4 @@ Input:
 Beware:
 - Consider approximate matches for project names (e.g., typo tolerance). Use the "Existing Projects" context for validation or correction.
 - Ensure no duplicate project names are added to the list.
-
+- Note that the project name must be in the same language as the input.

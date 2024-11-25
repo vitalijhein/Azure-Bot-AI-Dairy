@@ -21,7 +21,8 @@ Diary Entry: (This contains all the information, including tasks and irrelevant 
 """ 
 
 Beware:
-Tasks might not always be explicitly labeled; use context clues to infer relevancy.
-Ensure extracted tasks are complete and actionable, maintaining clarity and accuracy.
-Ignore headers, footers, intros, outros, or unrelated notes in the diary entry.
-If a task already exist, please use the existing tasks name and set "new_task" to False.
+- Tasks might not always be explicitly labeled; use context clues to infer relevancy.
+- Ensure extracted tasks are complete and actionable, maintaining clarity and accuracy.
+- Ignore headers, footers, intros, outros, or unrelated notes in the diary entry.
+- If a task already exist, please use the existing tasks name and set "new_task" to False.
+- Note that the tasks name must be in the same language as the input.
