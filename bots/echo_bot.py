@@ -90,8 +90,6 @@ class EchoBot(ActivityHandler):
             self.generate_projects_and_tasks_in_notion(raw_diary)
             await turn_context.send_activity(
                 MessageFactory.text(f"{result_response}\n\n{final_analysis}")
-                #MessageFactory.text(f"done")
-
             )
         except Exception as e:
             logger.error(f"Error in on_message_activity: {e}")
@@ -944,19 +942,23 @@ class EchoBot(ActivityHandler):
             # Step 1: Query all existing projects
             logger.info("Querying all projects from Notion.")
             projects = self.query_all_projects()
-            project_names = [
-                f"Project-Id: {project['project_id']}, Project-Name: {project['project_name']}\n"
+            project_names = "\n".join(
+                f"Project-Id: {project['project_id']}, Project-Name: {project['project_name']}"
                 for project in projects
-            ]
+            )
     
             # Step 2: Extract projects based on the diary text
             logger.info("Extracting projects from diary text.")
-            results = self.extract_projects(project_names, dairy_txt)
-            if not results:
+            extracted_projects = self.extract_projects(project_names, dairy_txt)
+            if not extracted_projects:
                 logger.warning("No projects were extracted from the diary text.")        
-            
+            if isinstance(extracted_projects, dict):
+                extracted_projects = [extracted_projects]  # Convert to a single-item list
+            elif not isinstance(task_results, list):
+                logger.warning(f"Unexpected task_results type: {type(extracted_projects)}. Defaulting to empty list.")
+                extracted_projects = extracted_projects
             # Step 3: Process each result
-            for result in results:
+            for result in extracted_projects:
                 if result.get("new_project") == True:
                     try: 
 
