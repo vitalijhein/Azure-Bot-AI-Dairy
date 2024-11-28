@@ -954,7 +954,7 @@ class EchoBot(ActivityHandler):
                 logger.warning("No projects were extracted from the diary text.")        
             if isinstance(extracted_projects, dict):
                 extracted_projects = [extracted_projects]  # Convert to a single-item list
-            elif not isinstance(task_results, list):
+            elif not isinstance(extracted_projects, list):
                 logger.warning(f"Unexpected task_results type: {type(extracted_projects)}. Defaulting to empty list.")
                 extracted_projects = extracted_projects
             # Step 3: Process each result
